@@ -15,92 +15,104 @@ class UserController extends Controller {
      *
      * @return \Illuminate\View\View
      */
-    public function index(){
+    public function index(Request $request){
+        $searchKey = $request->input('search');
         $users = DB::table('users')
-        ->join('roles', 'users.role_id', '=', 'roles.id')
-        ->select('users.*', 'roles.name as role_name')
-        ->get();
-
-        if($users){
+            ->join('roles', 'users.role_id', '=', 'roles.id')
+            ->where('users.name', 'like', '%'.$searchKey.'%')
+            ->orwhere('users.email', 'like', '%'.$searchKey.'%')
+            ->select('users.*', 'roles.name as role_name')
+            ->orderby('users.name')
+            ->get();
+    
+        if($users->isNotEmpty()){
             return response()->json([
                 'success' => true,
-                'data' => $users
-            ], 200);
-        }
-        else{
+                'users' => $users
+            ]);
+        } else {
             return response()->json([
                 'success' => false,
-                'message' => 'Role not found'
-            ], 401);
+                'message' => 'User not found'
+            ]);
         }
     }
     
-    /**
-     * Display user grid of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function grid(){
-        $title = "User Grid";
-        $description = "Some description for the page";
-        return view('pages.applications.user.grid',compact('title','description'));
+    public function store(Request $request){
+
+        $validators=Validator::make($request->all(),[
+            'name'=>'required',
+            'email'=>'required|email|unique:users',
+            'password'=>'required',
+        ]);
+        if($validators->fails()){
+            return response()->json(
+                [
+                    'sucess' => false,
+                    'message' => 'validation failed'
+                ], 404);
+        }else{
+            $defaultAvatar = '/src/assets/images/users/dummy-avatar.jpg';
+            $roleId = DB::table('roles')->where('name', '=', $request->role)->pluck('id')->first();  
+
+            $user = new User();
+            if($roleId) $user->role_id = $roleId;
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->avatar = $defaultAvatar;
+            if($user->save()){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully created',
+                    'user' => $user,
+                ]);     
+            }
+            else{
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Can not save.',
+                ]);     
+            }
+        }
     }
 
-    /**
-     * Display user list of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function list(){
-        $title = "User List";
-        $description = "Some description for the page";
-        return view('pages.applications.user.list',compact('title','description'));
-    }
-
-    /**
-     * Display user grid style of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function gridStyle(){
-        $title = "User Grid Style List";
-        $description = "Some description for the page";
-        return view('pages.applications.user.grid_style',compact('title','description'));
-    }
-
-    /**
-     * Display user group of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function userGroup(){
-        $title = "User Group List";
-        $description = "Some description for the page";
-        return view('pages.applications.user.user_group',compact('title','description'));
-    }
-
-    /**
-     * Display user add of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function add(){
-        $title = "User Add";
-        $description = "Some description for the page";
-        return view('pages.applications.user.add',compact('title','description'));
-    }
-
-    /**
-     * Display user table of the resource.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function table(){
-        $title = "User Data Table";
-        $description = "Some description for the page";
-        return view('pages.applications.user.data_table',compact('title','description'));
-    }
-    public function getAllUsers(){
+    public function update(Request $request, $id)  
+    {  
+        // Validate the incoming request data  
+        $request->validate([  
+            'role'=>'required',
+        ]);  
+        $roleId = DB::table('roles')->where('name', '=', $request->role)->pluck('id')->first();  
+        $user = User::findOrFail($id);  
+        $user->role_id = $roleId;
+        if($user->save()){
+            return response()->json(['success' => true, 'message' => 'User updated successfully!', 'user' => $user]);
+        }
+        else{
+            return response()->json(['success' => false, 'message' => 'Can not save updated user', 'user' => $user]);
+        }
         
-    }
+
+        // Optionally return a response  
+          
+    }  
+
+    public function destroy($id) 
+    {  
+        // Find the user or resource by ID  
+        $user = User::find($id);  
+
+        // Check if the resource exists  
+        if (!$user) {  
+            return response()->json(['success' => false, 'message' => 'User not found']);  
+        }  
+
+        // Delete the resource  
+        $user->delete();  
+
+        // Return a response  
+        return response()->json(['success' => true, 'message' => 'User deleted successfully']);  
+    }  
+    
 }

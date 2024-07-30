@@ -10,17 +10,14 @@ Route::group(['middleware'=>'guest'],function(){
     Route::get('/register',[AuthController::class,'register'])->name('register');
     Route::get('/forget-password',[AuthController::class,'forgetPassword'])->name('forget_password');
     Route::post('/signin',[AuthController::class,'signin'])->name('signin');
+    Route::post('/signinWithToken',[AuthController::class,'signinWithToken'])->name('signinWithToken');
     Route::post('/signup',[AuthController::class,'signup'])->name('signup');
 });
 
 Route::group(['middleware'=>'auth'], function(){
-    Route::controller(UserController::class)->group(function(){
-        Route::get('users/{id}', 'getUser');
-        
-    });
+    // Route::get('users', [UserController::class,'index']);
     
 });
 
+Route::resources(['users'=>UserController::class]);
 Route::resources(['roles'=>RoleController::class]);
-Route::get('users', [UserController::class,'index']);
-?>

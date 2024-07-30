@@ -20,13 +20,13 @@ class RoleController extends Controller
         if($roles){
             return response()->json([
                 'success' => true,
-                'data' => $roles
+                'roles' => $roles
             ], 200);
         }
         else{
             return response()->json([
                 'success' => false,
-                'message' => 'Role not found'
+                'error' => 'Role not found'
             ], 401);
         }
     }

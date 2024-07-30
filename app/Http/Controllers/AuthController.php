@@ -51,19 +51,21 @@ class AuthController extends Controller {
         $validators=Validator::make($request->all(),[
             'name'=>'required',
             'email'=>'required|email|unique:users',
-            'password'=>'required'
+            'password'=>'required',
         ]);
         if($validators->fails()){
             return response()->json(
                 [
                     'sucess' => false,
                     'error' => 'validation failed'
-                ], 401);
+                ], 404);
         }else{
+            $defaultAvatar = '/src/assets/images/users/dummy-avatar.jpg';
             $user = new User();
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
+            $user->avatar = $defaultAvatar;
             $user->save();
             $token = Session::token();
             // auth()->login($user);
@@ -95,7 +97,7 @@ class AuthController extends Controller {
         }else{
             if(Auth::attempt(['email'=>$request->email,'password'=>$request->password])){
                 $user = User::where('email', $request->email)->first();
-                $token = Session::getId();    
+                $token = csrf_token();    
                 return response()->json([
                     'success' => true,
                     'user' => $user,
@@ -109,6 +111,10 @@ class AuthController extends Controller {
                     ], 401);
             }
         }
+    }
+    public function signinWithToken(Request $request)
+    {
+        return response()->json($request->user());
     }
 
     /**

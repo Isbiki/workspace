@@ -15,7 +15,7 @@ return new class extends Migration
 {
     Schema::create('roles', function (Blueprint $table) {
         $table->id();
-        $table->string('name');
+        $table->string('name')->unique();
         $table->timestamps();
     });
     DB::table('roles')->insert([
@@ -35,7 +35,7 @@ return new class extends Migration
         $table->string('email')->unique();
         $table->timestamp('email_verified_at')->nullable();
         $table->string('password');
-        $table->string('profile_picture')->default('');
+        $table->string('avatar')->default('');
         $table->unsignedBigInteger('role_id')->default(2);
         $table->rememberToken();
         $table->timestamps();
