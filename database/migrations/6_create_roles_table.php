@@ -13,10 +13,22 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
             $table->timestamps();
         });
+        DB::table('roles')->insert([
+            'name' => 'admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('roles')->insert([
+            'name' => 'guest',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
     }
 
     /**
@@ -26,6 +38,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('roles');
     }
 };

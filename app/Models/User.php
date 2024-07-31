@@ -42,5 +42,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
     protected $table = 'users';
+
+    public function role(){
+        return $this->belongsTo(Role::class, 'role_id');
+    }
     
 }

@@ -68,8 +68,7 @@ class AuthController extends Controller {
             $user->avatar = $defaultAvatar;
             $user->save();
             $token = Session::token();
-            // auth()->login($user);
-            // return redirect()->intended(route('dashboard.demo_one','en'))->with('message','Registration was successfull !');     
+ 
             return response()->json([
                 'success' => true,
                 'user' => $user,
@@ -92,8 +91,8 @@ class AuthController extends Controller {
             return response()->json(
                 [
                     'sucess' => false,
-                    'error' => 'validation failed'
-                ], 401);
+                    'message' => 'validation failed'
+                ], 200);
         }else{
             if(Auth::attempt(['email'=>$request->email,'password'=>$request->password])){
                 $user = User::where('email', $request->email)->first();
@@ -107,8 +106,8 @@ class AuthController extends Controller {
                 return response()->json(
                     [
                         'sucess' => false,
-                        'error' => 'Login failed !Email/Password is incorrect !'
-                    ], 401);
+                        'message' => 'Login failed !  Email/Password is incorrect !'
+                    ], 200);
             }
         }
     }

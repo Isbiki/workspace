@@ -50,7 +50,7 @@ class UserController extends Controller {
                 [
                     'sucess' => false,
                     'message' => 'validation failed'
-                ], 404);
+                ]);
         }else{
             $defaultAvatar = '/src/assets/images/users/dummy-avatar.jpg';
             $roleId = DB::table('roles')->where('name', '=', $request->role)->pluck('id')->first();  
