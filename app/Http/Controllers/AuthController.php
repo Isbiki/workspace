@@ -60,12 +60,14 @@ class AuthController extends Controller {
                     'error' => 'validation failed'
                 ], 404);
         }else{
-            $defaultAvatar = '/src/assets/images/users/dummy-avatar.jpg';
+            $defaultAvatar = 'uploads/dummy-avatar.jpg';
+            $avatar = $request->input['avatar'] ?? $defaultAvatar;
+
             $user = new User();
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
-            $user->avatar = $defaultAvatar;
+            $user->avatar = $avatar;
             $user->save();
             $token = Session::token();
  
@@ -94,21 +96,40 @@ class AuthController extends Controller {
                     'message' => 'validation failed'
                 ], 200);
         }else{
-            if(Auth::attempt(['email'=>$request->email,'password'=>$request->password])){
-                $user = User::where('email', $request->email)->first();
-                $token = csrf_token();    
-                return response()->json([
-                    'success' => true,
-                    'user' => $user,
-                    'token' => $token
-                ], 200);
-            }else{
+            $user = User::where('email', $request->email)->first();
+            if($user){
+                if($user->permission){
+                    if(Auth::attempt(['email'=>$request->email,'password'=>$request->password])){
+                        $token = csrf_token();    
+                        return response()->json([
+                            'success' => true,
+                            'user' => $user,
+                            'token' => $token
+                        ], 200);
+                    }else{
+                        return response()->json(
+                            [
+                                'sucess' => false,
+                                'message' => 'Login failed !  Email/Password is incorrect !'
+                            ], 200);
+                    }
+                }
+                else{
+                    return response()->json(
+                        [
+                            'sucess' => false,
+                            'message' => 'Not permitted!'
+                        ], 200);    
+                }
+            }
+            else{
                 return response()->json(
                     [
                         'sucess' => false,
                         'message' => 'Login failed !  Email/Password is incorrect !'
                     ], 200);
             }
+            
         }
     }
     public function signinWithToken(Request $request)

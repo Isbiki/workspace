@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
+        'permission',
+        'avatar',
     ];
 
     /**
@@ -33,6 +36,14 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public static function rules()  
+    {  
+        return [  
+            'name'=>'required',
+            'email'=>'required|email|unique:users',
+            'password'=>'required',
+        ];  
+    } 
     /**
      * The attributes that should be cast.
      *

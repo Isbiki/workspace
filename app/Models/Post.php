@@ -21,17 +21,37 @@ class Post extends Authenticatable
     protected $fillable = [
         'title',
         'subtitle',
-        'category',
+        'category_id',
         'description',
-        'is_popular',
-        'author_id',
-        'is_breaking',
+        'user_id',
+        'breaking',
+        'active',
     ];
+
+    public static function rules()  
+    {  
+        return [  
+            'title' => 'required|string|max:255', 
+            'subtitle' => 'nullable|string|max:255',
+            'category_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'breaking' => 'required|integer',
+            'description' => 'required|string',
+            
+        ];  
+    } 
 
     protected $table = 'posts';
 
     public function user(){
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    public function comments()  
+    {  
+        return $this->hasMany(Comment::class);  
+    } 
+    public function category(){
+        return $this->belongsTo(Category::class, 'category_id');
     }
     
 }

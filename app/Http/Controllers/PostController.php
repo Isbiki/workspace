@@ -19,9 +19,10 @@ class PostController extends Controller {
     public function index(Request $request){
         $searchKey = $request->input('search');
         $posts = DB::table('posts')
-            ->join('users', 'posts.author_id', '=', 'users.id')
+            ->join('users', 'posts.user_id', '=', 'users.id')
+            ->join('categories', 'posts.category_id', '=', 'categories.id')
             ->where('posts.title', 'like', '%'.$searchKey.'%')
-            ->select('posts.*', 'users.name as author')
+            ->select('posts.*', 'users.name as user', 'categories.name as category')
             ->orderby('posts.created_at')
             ->get();
     
@@ -43,38 +44,34 @@ class PostController extends Controller {
         if($validators->fails()){
             return response()->json(
                 [
-                    'sucess' => false,
-                    'message' => 'validation failed'
-                ]);
-        }else{
-            $post = Post::create($request->all());
-            
-            if($post){
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Successfully created',
-                    'post' => $post,
-                ]);     
-            }
-            else{
-                return response()->json([
                     'success' => false,
-                    'message' => 'Can not save.',
-                ]);     
-            }
+                    'message' => 'Validation failed',
+                    'error' => $validators->errors()
+                ]);
         }
+        try {  
+            // Use only necessary fields  
+            $post = Post::create($request->all()); // Example fields  
+            
+            return response()->json([  
+                'success' => true,  
+                'message' => 'Successfully created',  
+                'post' => $post,  
+            ], 201); // 201 Created  
+    
+        } catch (\Exception $e) {  
+            // Log the exception message  
+            \Log::error('Post creation failed: ' . $e->getMessage());  
+            
+            return response()->json([  
+                'success' => false,  
+                'message' => 'Can not save.',  
+            ], 500); // 500 Internal Server Error  
+        }  
     }
 
     public function update(Request $request, $id)  
     {  
-        $validators=Validator::make($request->all(), Post::rules());
-        if($validators->fails()){
-            return response()->json(
-                [
-                    'sucess' => false,
-                    'message' => 'validation failed'
-                ]);
-        }  
         $post = Post::findOrFail($id);  
         $post->fill($request->all());
         if($post->save()){
@@ -97,5 +94,16 @@ class PostController extends Controller {
             return response()->json(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()], 500);  
         }   
     }  
+
+    public function show($id){
+        try {  
+            $post = Post::findOrFail($id);  
+            return response()->json(['success' => true, 'post' => $post], 200);   
+        } catch (ModelNotFoundException $e) {  
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);  
+        } catch (\Exception $e) {  
+            return response()->json(['success' => false, 'error' => 'An error occurred: ' . $e->getMessage()], 500);  
+        }  
+    }
     
 }

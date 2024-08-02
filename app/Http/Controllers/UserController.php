@@ -22,7 +22,7 @@ class UserController extends Controller {
             ->where('users.name', 'like', '%'.$searchKey.'%')
             ->orwhere('users.email', 'like', '%'.$searchKey.'%')
             ->select('users.*', 'roles.name as role_name')
-            ->orderby('users.name')
+            ->orderby('users.created_at', 'desc')
             ->get();
     
         if($users->isNotEmpty()){
@@ -39,80 +39,72 @@ class UserController extends Controller {
     }
     
     public function store(Request $request){
-
-        $validators=Validator::make($request->all(),[
-            'name'=>'required',
-            'email'=>'required|email|unique:users',
-            'password'=>'required',
-        ]);
-        if($validators->fails()){
-            return response()->json(
-                [
-                    'sucess' => false,
-                    'message' => 'validation failed'
-                ]);
-        }else{
-            $defaultAvatar = '/src/assets/images/users/dummy-avatar.jpg';
-            $roleId = DB::table('roles')->where('name', '=', $request->role)->pluck('id')->first();  
-
-            $user = new User();
-            if($roleId) $user->role_id = $roleId;
-            $user->name = $request->name;
-            $user->email = $request->email;
-            $user->password = bcrypt($request->password);
-            $user->avatar = $defaultAvatar;
-            if($user->save()){
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Successfully created',
-                    'user' => $user,
-                ]);     
-            }
-            else{
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Can not save.',
-                ]);     
-            }
-        }
+        try {  
+            $validators = Validator::make($request->all(), User::rules());  
+            if ($validators->fails()) {  
+                return response()->json([  
+                    'success' => false,  
+                    'message' => 'Validation Error',   
+                ]);  
+            } else {  
+                $user = User::create($request->all());  
+                
+                if ($user) {  
+                    return response()->json([  
+                        'success' => true,  
+                        'message' => 'Successfully created',  
+                        'user' => $user,  
+                    ]);  
+                } else {  
+                    return response()->json([  
+                        'success' => false,  
+                        'message' => 'Cannot save.',  
+                    ]);  
+                }  
+            }  
+        } catch (\Throwable $e) {  
+            \Log::error($e); // Log the error  
+            return response()->json([  
+                'success' => false,  
+                'message' => 'An error occurred',  
+                'error' => $e->getMessage(),  
+            ], 500);  
+        }  
+        
     }
 
     public function update(Request $request, $id)  
     {  
-        // Validate the incoming request data  
-        $request->validate([  
-            'role'=>'required',
-        ]);  
-        $roleId = DB::table('roles')->where('name', '=', $request->role)->pluck('id')->first();  
+        // $validators=Validator::make($request->all(), User::rules());
+        // if($validators->fails()){
+        //     return response()->json(
+        //         [
+        //             'success' => false,
+        //             'message' => 'validation failed'
+        //         ]);
+        // }  
         $user = User::findOrFail($id);  
-        $user->role_id = $roleId;
+        $user->fill($request->all());
         if($user->save()){
             return response()->json(['success' => true, 'message' => 'User updated successfully!', 'user' => $user]);
         }
         else{
-            return response()->json(['success' => false, 'message' => 'Can not save updated user', 'user' => $user]);
+            return response()->json(['success' => false, 'message' => 'Can not save updated User', 'user' => $user]);
         }
-        
-
-        // Optionally return a response  
           
     }  
 
     public function destroy($id) 
     {  
-        // Find the user or resource by ID  
-        $user = User::find($id);  
-
-        // Check if the resource exists  
-        if (!$user) {  
-            return response()->json(['success' => false, 'message' => 'User not found']);  
-        }  
-
-        // Delete the resource  
-        $user->delete();  
-
-        // Return a response  
-        return response()->json(['success' => true, 'message' => 'User deleted successfully']);  
+        try {  
+            $user = User::findOrFail($id);  
+            $user->delete();  
+            return response()->json(['success' => true, 'message' => 'User deleted successfully'], 200);   
+        } catch (ModelNotFoundException $e) {  
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);  
+        } catch (\Exception $e) {  
+            return response()->json(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()], 500);  
+        } return response()->json(['success' => true, 'message' => 'User deleted successfully']);  
     }  
     
 }

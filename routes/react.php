@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\UploadController;  
 
 Route::group(['middleware'=>'guest'],function(){
     Route::get('/',[AuthController::class,'login'])->name('login');
@@ -21,3 +24,7 @@ Route::group(['middleware'=>'auth'], function(){
 
 Route::resources(['users'=>UserController::class]);
 Route::resources(['roles'=>RoleController::class]);
+Route::resources(['posts'=>PostController::class]);
+Route::get('/posts/{id}', [PostController::class, 'show']);
+Route::resources(['categories'=>CategoryController::class]);
+Route::post('/upload', [UploadController::class, 'upload']); 
