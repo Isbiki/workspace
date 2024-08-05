@@ -75,14 +75,6 @@ class UserController extends Controller {
 
     public function update(Request $request, $id)  
     {  
-        // $validators=Validator::make($request->all(), User::rules());
-        // if($validators->fails()){
-        //     return response()->json(
-        //         [
-        //             'success' => false,
-        //             'message' => 'validation failed'
-        //         ]);
-        // }  
         $user = User::findOrFail($id);  
         $user->fill($request->all());
         if($user->save()){
